@@ -24,9 +24,16 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY backend /app/backend
 COPY src /app/src
 
-# 7. Copy model checkpoints into /app/outputs
-COPY outputs/best_classifier.pth /app/outputs/best_classifier.pth
-COPY outputs/best_unet.pth /app/outputs/best_unet.pth
+# 7. Model checkpoints setup:
+# Railway clones Git LFS pointer stubs by default, causing PyTorch "invalid load key, 'v'".
+# Download authentic PyTorch binary checkpoints directly from GitHub Release assets into /app/outputs during build.
+ARG CLASSIFIER_URL="https://github.com/bhav-vaidya-23/AI-Brain-Tumor-Analysis/releases/download/v1.0.0/best_classifier.pth"
+ARG UNET_URL="https://github.com/bhav-vaidya-23/AI-Brain-Tumor-Analysis/releases/download/v1.0.0/best_unet.pth"
+
+RUN python /app/backend/download_checkpoints.py \
+    --classifier-url "${CLASSIFIER_URL}" \
+    --unet-url "${UNET_URL}" \
+    --dest-dir /app/outputs
 
 # 8. Expose default port
 EXPOSE 8000

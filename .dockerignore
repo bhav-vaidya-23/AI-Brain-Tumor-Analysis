@@ -9,10 +9,8 @@ reports/
 scripts/
 *.log
 
-# Output directory contents except model checkpoints
-outputs/*
-!outputs/best_classifier.pth
-!outputs/best_unet.pth
+# Output directory (checkpoints are fetched directly via GitHub Release assets)
+outputs/
 
 # Python bytecode & cache
 __pycache__/

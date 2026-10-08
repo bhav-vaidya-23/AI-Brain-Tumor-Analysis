@@ -86,25 +86,49 @@ npm run dev
 
 ---
 
-## 4. Git & Model Checkpoint Handling (Git LFS)
+## 4. Model Checkpoint Storage & Deployment Strategy
 
-The application uses two trained checkpoints in `outputs/`:
-- `outputs/best_classifier.pth`: **106.8 MB**
-- `outputs/best_unet.pth`: **355.3 MB**
+The application requires two trained checkpoints in `outputs/`:
+- `outputs/best_classifier.pth`: **106.8 MB** (ResNet-18)
+- `outputs/best_unet.pth`: **355.3 MB** (4-Level U-Net, Epoch 23)
 
-Since GitHub enforces a **100 MB per-file limit** for standard Git commits, use **Git Large File Storage (Git LFS)** before pushing to GitHub:
-
+### A. Local & Repository Tracking (Git LFS)
+In the Git repository, these files are tracked using **Git Large File Storage (Git LFS)** via `.gitattributes`:
 ```bash
-# 1. Install and initialize Git LFS
-git lfs install
-
-# 2. Track model weight files
-git lfs track "*.pth"
-
-# 3. Add .gitattributes and commit
-git add .gitattributes outputs/*.pth
-git commit -m "Add model checkpoints via Git LFS"
+outputs/*.pth filter=lfs diff=lfs merge=lfs -text
 ```
+
+### B. Deployment Asset Strategy (GitHub Releases)
+Cloud platforms such as Railway clone Git repositories without LFS object storage enabled, resulting in small ~130-byte Git LFS pointer text files (`version https://git-lfs.github.com/spec/v1...`). When PyTorch attempts to load these text stubs, it fails with:
+```
+[FastAPI ERROR] Failed to load models on startup: invalid load key, 'v'.
+```
+
+To resolve this reliably in production, model weights are hosted as **GitHub Release Assets** and automatically downloaded/verified inside Docker at build time:
+
+#### Exact Release Asset URLs:
+| Model | Release Asset URL |
+| :--- | :--- |
+| **ResNet-18 Classifier** | `https://github.com/bhav-vaidya-23/AI-Brain-Tumor-Analysis/releases/download/v1.0.0/best_classifier.pth` |
+| **U-Net Segmentation** | `https://github.com/bhav-vaidya-23/AI-Brain-Tumor-Analysis/releases/download/v1.0.0/best_unet.pth` |
+
+#### How to Set Up the GitHub Release:
+1. Navigate to the GitHub repository: `https://github.com/bhav-vaidya-23/AI-Brain-Tumor-Analysis`
+2. Click **Releases > Draft a new release** (or go to `releases/new`).
+3. Set **Choose a tag**: `v1.0.0` (create tag on publish).
+4. Set **Release title**: `v1.0.0 - Production Model Checkpoints`.
+5. Attach the two checkpoint binaries from your local `outputs/` folder:
+   - `outputs/best_classifier.pth`
+   - `outputs/best_unet.pth`
+6. Click **Publish release**.
+
+#### Automated Docker Build Verification:
+During the Docker build on Railway, `backend/download_checkpoints.py`:
+1. Fetches both model binaries from the exact GitHub Release URLs.
+2. Checks that neither file is a Git LFS pointer text stub.
+3. Validates archive magic bytes and tests PyTorch structure with `torch.load`.
+4. Saves them to `/app/outputs/best_classifier.pth` and `/app/outputs/best_unet.pth`.
+5. Fails the build immediately with actionable instructions if the download or verification fails.
 
 ---
 
