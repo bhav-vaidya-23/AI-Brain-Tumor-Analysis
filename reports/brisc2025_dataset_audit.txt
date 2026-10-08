@@ -1,0 +1,146 @@
+BRISC2025 DATASET AUDIT
+=======================
+
+1. Dataset Location
+-------------------
+Path: C:\Users\vaidy\OneDrive\Desktop\Programming\COMPUTER VISION\TumorDetetction\brisc2025
+Status: Found and verified in current workspace.
+
+2. Directory Structure
+---------------------
+[DIR] C:\Users\vaidy\OneDrive\Desktop\Programming\COMPUTER VISION\TumorDetetction\brisc2025/ (2 subdirs, 5 files)
+    [DIR] classification_task/ (2 subdirs, 0 files)
+        [DIR] test/ (4 subdirs, 0 files)
+            [DIR] glioma/ (0 subdirs, 254 files)
+            [DIR] meningioma/ (0 subdirs, 306 files)
+            [DIR] no_tumor/ (0 subdirs, 140 files)
+            [DIR] pituitary/ (0 subdirs, 300 files)
+        [DIR] train/ (4 subdirs, 0 files)
+            [DIR] glioma/ (0 subdirs, 1147 files)
+            [DIR] meningioma/ (0 subdirs, 1329 files)
+            [DIR] no_tumor/ (0 subdirs, 1067 files)
+            [DIR] pituitary/ (0 subdirs, 1457 files)
+    [DIR] segmentation_task/ (2 subdirs, 0 files)
+        [DIR] test/ (2 subdirs, 0 files)
+            [DIR] images/ (0 subdirs, 860 files)
+            [DIR] masks/ (0 subdirs, 860 files)
+        [DIR] train/ (2 subdirs, 0 files)
+            [DIR] images/ (0 subdirs, 3933 files)
+            [DIR] masks/ (0 subdirs, 3933 files)
+
+3. Classification Dataset Summary
+---------------------------------
+Total classification images: 6000
+Training images:             5000 (83.33%)
+Testing images:              1000 (16.67%)
+Number of classes:           4
+Classes present:             glioma, meningioma, no_tumor, pituitary
+
+4. Classification Class Distribution
+------------------------------------
+Class           | Train    | Test     | Total    | % of Total
+---------------------------------------------------------
+glioma          | 1147     | 254      | 1401     | 23.35    %
+meningioma      | 1329     | 306      | 1635     | 27.25    %
+no_tumor        | 1067     | 140      | 1207     | 20.12    %
+pituitary       | 1457     | 300      | 1757     | 29.28    %
+---------------------------------------------------------
+Total           | 5000     | 1000     | 6000     | 100.00%
+
+5. Segmentation Dataset Summary
+-------------------------------
+Total segmentation images:   4793
+  - Training images:         3933 (82.06%)
+  - Testing images:          860 (17.94%)
+Total segmentation masks:    4793
+  - Training masks:          3933
+  - Testing masks:           860
+Valid image-mask pairs:      4793 (100.00% pair matching rate)
+  - Train pairs:             3933
+  - Test pairs:              860
+Images without masks:        0
+Masks without images:        0
+Pair dimension mismatches:   0
+Note: In BRISC2025, segmentation is specifically provided for tumor cases (Glioma, Meningioma, Pituitary).
+Non-tumor slices (1,207 images) do not contain tumors and thus are omitted from the segmentation task subset.
+
+6. Image Properties (Classification & Segmentation)
+---------------------------------------------------
+File format:                 JPEG (.jpg) across all 6,000 images
+Channels / Modes:            RGB (3-channel): 3134 slices | Grayscale 'L' (1-channel): 2866 slices
+Primary Resolution:          512 x 512 pixels (4881/6000 images = 81.3%)
+Other Resolutions present:   369x369 (363), 216x369 (354), 256x256 (32), 225x225 (20), etc.
+Data type:                   uint8 (8-bit unsigned integer per pixel)
+Pixel value min range:       [0, 32]
+Pixel value max range:       [181, 255]
+Overall average intensity:   44.47 / 255.0
+
+7. Mask Properties
+------------------
+File format:                 PNG (.png) across all 4,793 masks
+Channels / Mode:             Single channel / Grayscale ('L' mode: 4,793 masks)
+Primary Resolution:          512 x 512 pixels (4504/4793 masks = 94.0%)
+Data type:                   uint8 (8-bit unsigned integer per pixel)
+Mask Nature:                 Binary Tumor Segmentation Mask (0 = Background / Normal Brain, 255 = Tumor)
+Boundary Anti-aliasing:      Contains minor edge smoothing values [1..10, 246..255] along tumor contour margins
+Empty masks (all 0s):        0 (All 4,793 masks have active tumor annotations)
+Tumor breakdown in masks:    Glioma (gl): 1401, Meningioma (me): 1635, Pituitary (pi): 1757
+
+8. Image-Mask Pair Validation
+-----------------------------
+Total paired image-mask sets evaluated: 4793 / 4793
+Exact filename match rate:              100.00%
+Image & Mask dimension alignment:       100.00% (0 mismatched dimensions)
+Mismatches / Orphans:                   0 unmatched images, 0 unmatched masks
+Result: All segmentation images have 100% corresponding mask files.
+
+9. Data Quality Checks
+----------------------
+Corrupted classification images: 0 (verified 6,000 / 6,000)
+Corrupted segmentation masks:    0 (verified 4,793 / 4,793)
+Completely black images:         0 (no all-zero image files)
+Unexpected file formats:         0 (100% .jpg for images, 100% .png for masks)
+Duplicate classification filenames: 0
+Duplicate segmentation filenames:   0
+
+10. Metadata Summary
+--------------------
+manifest.csv present:        True (Checksum verified: manifest.csv.sha256 present)
+manifest.json present:       True (Checksum verified: manifest.json.sha256 present)
+manifest.csv record count:   15,586 rows
+manifest.csv schema fields:  relative_path, filename, task, split, index, tumor_code, tumor_label, plane_code, plane_label, sequence, is_mask, linked_image, width, height, file_size_bytes, sha256
+Tasks distribution in CSV:   Classification: 6000, Segmentation: 9586
+Splits distribution in CSV:  Train: 12866, Test: 2720
+Classes in CSV:              Glioma: 4203, Meningioma: 4905, Pituitary: 5271, No Tumor: 1207
+Anatomical Planes in CSV:    Axial: 5171, Coronal: 5227, Sagittal: 5188
+
+11. Dataset Issues / Inconsistencies
+-----------------------------------
+Manifest paths missing from disk: 0
+Disk files missing from manifest: 0
+Classification Planes (ax/co/sa): Axial (ax): 1993, Coronal (co): 1981, Sagittal (sa): 2026
+Integrity Check Summary:
+  - 0 corrupted image files.
+  - 0 corrupted mask files.
+  - 0 missing pairs between segmentation images and masks.
+  - 100% concordance between manifest metadata and filesystem contents.
+  - Note on channel consistency: ~52% of MRI images have 3 identical channels (RGB), ~48% are single-channel grayscale ('L'). Preprocessing must convert all images to 3-channel RGB or 1-channel Grayscale uniformly.
+  - Note on resolution: ~81.3% of images are 512x512; ~18.7% have varying slice dimensions. All models should include a standardized resizing step (e.g., 256x256 or 512x512).
+
+12. Recommendations for Preprocessing
+--------------------------------------
+1. Channel Standardization:
+   - Convert all input MRI slices to RGB (3-channel) via `image.convert('RGB')` for transfer learning backbones (ResNet, EfficientNet, Swin, ConvNeXt), or single-channel grayscale if training custom architectures from scratch.
+2. Image Resizing & Aspect Ratio Preservation:
+   - Standardize input image dimensions to 256x256 or 512x512 using bilinear/bicubic interpolation for images and nearest-neighbor interpolation for masks to prevent label blurring.
+3. Mask Binarization & Thresholding:
+   - Convert masks to binary tensors using `(mask > 127).float()` to cleanly remove antialiasing contour values and yield sharp 0.0/1.0 masks for Dice & BCE loss computation.
+4. Normalization:
+   - Scale image intensities from [0, 255] to [0.0, 1.0], followed by z-score standardization (`(x - mean) / std`) or standard ImageNet normalization.
+5. Multi-Planar Training & Stratification:
+   - The dataset contains Axial (ax), Coronal (co), and Sagittal (sa) views. Ensure train/val splits preserve plane and class stratification.
+6. Data Augmentation Strategy:
+   - For Classification: Random horizontal flips, slight rotation (+-15 deg), random brightness/contrast adjustments.
+   - For Segmentation: Apply identical geometric transformations (flips, rotations, scaling) simultaneously to both the MRI image and its paired mask.
+7. Pipeline Decoupling for Grad-CAM Explainability:
+   - Build independent classification and U-Net segmentation modules with standardized PyTorch Dataset/DataLoader classes so Grad-CAM heatmaps can be directly compared against ground-truth segmentation masks.

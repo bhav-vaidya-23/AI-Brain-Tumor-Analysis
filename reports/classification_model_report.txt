@@ -1,0 +1,32 @@
+======================================================================
+BRISC2025 BRAIN TUMOR CLASSIFICATION REPORT
+Model: ResNet-18 (Two-Stage Transfer Learning)
+======================================================================
+
+Best Validation Epoch: 15
+Best Validation Macro F1: 97.92%
+
+Independent Test Set Evaluation (1,000 Samples):
+  - Test Accuracy: 97.80%
+  - Test Loss:     0.0808
+  - Test Macro F1: 98.01%
+
+Detailed Classification Report:
+              precision    recall  f1-score   support
+
+      glioma     0.9798    0.9528    0.9661       254
+  meningioma     0.9524    0.9804    0.9662       306
+   pituitary     0.9966    0.9867    0.9916       300
+    no_tumor     0.9929    1.0000    0.9964       140
+
+    accuracy                         0.9780      1000
+   macro avg     0.9804    0.9800    0.9801      1000
+weighted avg     0.9783    0.9780    0.9780      1000
+
+
+Confusion Matrix:
+               glio   meni   pitu   no_t
+glioma          242     12      0      0
+meningioma        4    300      1      1
+pituitary         1      3    296      0
+no_tumor          0      0      0    140

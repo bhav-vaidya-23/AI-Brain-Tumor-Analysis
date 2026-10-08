@@ -1,0 +1,106 @@
+GRAD-CAM EXPLAINABILITY ANALYSIS REPORT
+=======================================
+
+1. Grad-CAM Method
+------------------
+Grad-CAM (Gradient-weighted Class Activation Mapping) calculates the gradient of the target class score y^c with respect to the feature activation maps A^k of a designated convolutional layer.
+Importance weights are computed via Global Average Pooling:
+   alpha_k^c = (1 / Z) * sum_i sum_j (d y^c / d A_{i,j}^k)
+The final class-discriminative heatmap is obtained by taking a positive linear combination followed by ReLU:
+   L_{Grad-CAM}^c = ReLU( sum_k alpha_k^c * A^k )
+The resulting heatmap is normalized to [0.0, 1.0] and resized via bilinear interpolation to match the native slice resolution.
+
+2. Target Layer
+---------------
+Target Architecture: ResNet-18
+Target Layer: 'model.layer4' (Final convolutional block: 2 BasicBlocks, 512 channels, 8x8 spatial feature grid at 256x256 input).
+Rationale: layer4 captures high-level, class-specific semantic representations and spatial localization immediately prior to global average pooling and linear classification.
+
+3. Preprocessing Pipeline
+-------------------------
+All MRI slices undergo deterministic preprocessing matching the classification test pipeline:
+  1. PIL Image conversion to 3-channel RGB: image.convert('RGB')
+  2. Spatial Resizing: 256 x 256 (Bilinear)
+  3. Tensor Conversion: PyTorch float tensor scaled to [0.0, 1.0]
+  4. Normalization: ImageNet mean [0.485, 0.456, 0.406] and std [0.229, 0.224, 0.225]
+
+4. Sample Selection Method
+--------------------------
+Sampling Strategy: Deterministic selection with fixed random seed (SEED = 42).
+Total Visualizations Generated: 28
+Sample Subsets Included:
+  - Correctly Classified Cases: 12 (3 Glioma, 3 Meningioma, 3 Pituitary, 3 No Tumor)
+  - Incorrectly Classified Error Cases: 8 (Representing major confusion boundaries)
+  - Confidence Stratifications: 9 (3 Highest-confidence correct, 3 Lowest-confidence correct, 3 Highest-confidence incorrect)
+
+5. Correct Prediction Examples (Quantitative Summary)
+-----------------------------------------------------
+Filename                            | Class        | Conf     | Mean Act  | Max Act  | >=50% Act 
+--------------------------------------------------------------------------------------------
+brisc2025_test_00001_gl_ax_t1.jpg   | glioma       | 100.00% |   0.3662 |    1.00 |    29.72%
+brisc2025_test_00122_gl_co_t1.jpg   | glioma       | 100.00% |   0.2935 |    1.00 |    20.48%
+brisc2025_test_00254_gl_sa_t1.jpg   | glioma       |  99.84% |   0.2650 |    1.00 |    15.80%
+brisc2025_test_00255_me_ax_t1.jpg   | meningioma   |  99.23% |   0.3110 |    1.00 |    19.55%
+brisc2025_test_00407_me_co_t1.jpg   | meningioma   | 100.00% |   0.2110 |    1.00 |    15.20%
+brisc2025_test_00560_me_sa_t1.jpg   | meningioma   | 100.00% |   0.2186 |    1.00 |    14.81%
+brisc2025_test_00701_pi_ax_t1.jpg   | pituitary    | 100.00% |   0.4106 |    1.00 |    37.51%
+brisc2025_test_00852_pi_co_t1.jpg   | pituitary    | 100.00% |   0.3476 |    1.00 |    29.27%
+brisc2025_test_01000_pi_sa_t1.jpg   | pituitary    |  99.99% |   0.3884 |    1.00 |    29.22%
+brisc2025_test_00561_no_ax_t1.jpg   | no_tumor     |  99.99% |   0.3841 |    1.00 |    27.24%
+brisc2025_test_00630_no_co_t1.jpg   | no_tumor     | 100.00% |   0.4249 |    1.00 |    35.65%
+brisc2025_test_00700_no_sa_t1.jpg   | no_tumor     | 100.00% |   0.3522 |    1.00 |    26.90%
+--------------------------------------------------------------------------------------------
+
+6. Incorrect Prediction Examples (Error Boundary Analysis)
+----------------------------------------------------------
+Filename                            | True Class  | Pred Class  | Conf     | Mean Act  | >=50% Act
+--------------------------------------------------------------------------------------------
+brisc2025_test_00004_gl_ax_t1.jpg   | glioma      | meningioma  |  50.47% |   0.2002 |    14.68%
+brisc2025_test_00144_gl_co_t1.jpg   | glioma      | meningioma  |  98.94% |   0.3336 |    23.80%
+brisc2025_test_00149_gl_co_t1.jpg   | glioma      | meningioma  |  53.00% |   0.3150 |    19.82%
+brisc2025_test_00281_me_ax_t1.jpg   | meningioma  | glioma      |  98.19% |   0.4088 |    34.58%
+brisc2025_test_00363_me_ax_t1.jpg   | meningioma  | glioma      |  96.08% |   0.3812 |    30.21%
+brisc2025_test_00722_pi_ax_t1.jpg   | pituitary   | meningioma  |  99.87% |   0.3132 |    22.25%
+brisc2025_test_00805_pi_ax_t1.jpg   | pituitary   | meningioma  |  92.36% |   0.3069 |    21.57%
+brisc2025_test_00412_me_co_t1.jpg   | meningioma  | no_tumor    |  55.18% |   0.3544 |    30.36%
+brisc2025_test_00820_pi_ax_t1.jpg   | pituitary   | glioma      |  96.85% |   0.3545 |    27.20%
+brisc2025_test_00826_pi_co_t1.jpg   | pituitary   | meningioma  |  99.54% |   0.2995 |    18.91%
+--------------------------------------------------------------------------------------------
+
+7. Confidence Analysis on Selected Visualizations
+-------------------------------------------------
+High-Confidence Correct Predictions: Mean Conf = 100.00% (Range: 100.00% - 100.00%)
+Lower-Confidence Correct Predictions: Mean Conf = 50.88% (Range: 48.81% - 53.11%)
+High-Confidence Incorrect Predictions: Mean Conf = 99.54% (Range: 99.54% - 99.54%)
+Note: Raw softmax probabilities reflect classifier decision boundary sharpness rather than true posterior probabilities.
+
+8. Quantitative Heatmap Statistics by Tumor Class
+-------------------------------------------------
+Class        | Mean Activation  | Max Activation  | Area >= 25%  | Area >= 50%  | Area >= 75% 
+----------------------------------------------------------------------------------------
+glioma       |          0.2917 |           1.00 |      46.27% |      20.13% |       6.82%
+meningioma   |          0.3142 |           1.00 |      50.99% |      24.12% |       7.69%
+pituitary    |          0.3382 |           1.00 |      56.08% |      25.58% |       9.15%
+no_tumor     |          0.3871 |           1.00 |      67.19% |      29.93% |       9.54%
+----------------------------------------------------------------------------------------
+
+9. Qualitative Observations
+---------------------------
+A. Tumor Localization in Correct Predictions:
+   - Glioma Cases: Grad-CAM produces intense, focal activations centered directly over hyperintense infiltrative parenchymal lesions and peritumoral edema.
+   - Meningioma Cases: Saliency maps concentrate strongly along extra-axial dural-based mass regions and adjacent skull/meningeal borders.
+   - Pituitary Cases: Activations consistently highlight the sellar and suprasellar regions at the skull base (pituitary fossa).
+
+B. No-Tumor Cases:
+   - Unlike tumor classes which display localized compact saliency peaks, No-Tumor heatmaps exhibit broad, diffuse activation patterns across normal cerebral hemispheres, ventricles, and brainstem.
+   - No artifactual saliency concentration is observed on empty image background borders.
+
+C. Error Boundary Analysis:
+   - For Glioma -> Meningioma misclassifications (e.g. test_00144, test_00235), Grad-CAM demonstrates that the model focused heavily on peripheral cortical boundaries resembling dural attachments, leading to the Meningioma prediction.
+   - For Pituitary -> Meningioma errors (e.g. test_00722), the model attended to broad skull-base hyperintensities overlapping the sphenoid ridge.
+
+10. Limitations
+---------------
+1. Post-Hoc Saliency: Grad-CAM provides a post-hoc visualization of regions influencing the model prediction. It does not establish causal reasoning or clinical validity.
+2. Coarse Resolution: Because layer4 has an 8x8 spatial grid (downsampled by factor 32 from 256x256), Grad-CAM heatmaps are inherently coarse and should not be used as precise surgical or diagnostic contours.
+3. Pixel-Level Ground Truth: Direct pixel-level boundary evaluation will be addressed in subsequent U-Net segmentation benchmarking.

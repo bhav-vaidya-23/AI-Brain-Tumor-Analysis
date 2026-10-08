@@ -1,0 +1,133 @@
+U-NET BRAIN TUMOR SEGMENTATION REPORT
+====================================
+
+1. Dataset
+----------
+Benchmark Dataset: BRISC2025 Brain Tumor MRI Segmentation Dataset
+Total Valid Pairs: 4,793 (3,933 Train / 860 Test)
+Target Modality: T1-Weighted MRI Slices
+Segmentation Scope: Binary Tumor Lesion Segmentation (Foreground = 1, Background = 0)
+
+2. Split Strategy
+-----------------
+Official Training Set Partitioning (80/20 Stratified by Tumor Code, Seed = 42):
+  - U-Net Training Subset:   3146 pairs (80.0% of official train)
+  - U-Net Validation Subset: 787 pairs (20.0% of official train)
+  - U-Net Test Holdout:      860 pairs (100% of official test, completely isolated)
+Statement: The official segmentation test set was kept isolated from training and model selection.
+
+3. Preprocessing Pipeline
+-------------------------
+Image Preprocessing:
+  - Format conversion to single-channel grayscale ('L' mode)
+  - Spatial Resizing: 256 x 256 using Bilinear Interpolation
+  - Normalization: Normalized to [-1.0, 1.0] with mean=[0.5], std=[0.5]
+Mask Preprocessing:
+  - Spatial Resizing: 256 x 256 strictly using Nearest-Neighbor Interpolation
+  - Binarization: (mask > 0).float() yielding binary tensors in {0.0, 1.0} of shape [1, 256, 256]
+
+4. Data Augmentation (Training Only)
+-------------------------------------
+Synchronous Spatial Transformations:
+  - Random Horizontal Flip (p = 0.5)
+  - Random Vertical Flip (p = 0.5)
+  - Small Random Rotation (+-10.0 degrees, nearest neighbor for mask)
+  - Validation and Test datasets utilize deterministic resizing and normalization only.
+
+5. U-Net Architecture
+---------------------
+Model Type: Standard 4-Level U-Net from Scratch (No pretrained weights)
+Architecture Layout:
+  - Encoder: 1 -> 64 -> 128 -> 256 -> 512 (DoubleConv blocks with BatchNorm & ReLU + MaxPool2d(2))
+  - Bottleneck: 512 -> 1024
+  - Decoder: 1024 -> 512 -> 256 -> 128 -> 64 (ConvTranspose2d(2, 2) + Skip Concatenation + DoubleConv)
+  - Output Head: Conv2d(64, 1, kernel_size=1) producing 1 channel raw logits
+Parameter Count: 31,037,633 parameters (100% trainable)
+
+6. Loss Function
+----------------
+Combined Compound Loss: TotalLoss = 0.5 * BCEWithLogitsLoss + 0.5 * DiceLoss
+Dice Loss Formulation: DiceLoss = 1.0 - (2 * |P ∩ Y| + 1e-6) / (|P| + |Y| + 1e-6)
+where P = sigmoid(logits) and Y = binary ground-truth target.
+
+7. Training Configuration
+-------------------------
+Optimizer:               AdamW (Initial LR = 1e-4, Weight Decay = 1e-4)
+LR Scheduler:            ReduceLROnPlateau (mode='max', factor=0.5, patience=4, on Val Dice)
+Batch Size:              16 (CPU Execution)
+Max Epochs:              50
+Early Stopping:          Patience = 10 epochs monitored on Validation Dice
+Checkpoint Selection:    Highest Validation Dice Coefficient
+
+8. Training History & Model Selection
+-------------------------------------
+Best Validation Epoch:   Epoch 23
+Best Validation Dice:    76.65%
+Best Validation IoU:     67.14%
+Best Model Checkpoint:   C:\Users\vaidy\OneDrive\Desktop\Programming\COMPUTER VISION\TumorDetetction\outputs\best_unet.pth
+
+9. Validation Results (N = 787 Pairs)
+--------------------------------------
+Metric               | Mean       | Std        | Median    
+-------------------------------------------------------
+Dice Coefficient     |    76.65% |    25.05% |    86.50%
+IoU / Jaccard        |    67.14% |    25.02% |    76.21%
+Precision            |    84.42% |    19.55% |    91.47%
+Recall / Sens        |    77.42% |    26.01% |    88.36%
+Specificity          |    99.76% |     0.39% |    99.88%
+Pixel Accuracy       |    99.34% |     0.82% |    99.63%
+-------------------------------------------------------
+
+10. Independent Test Results (N = 860 Untouched Pairs)
+------------------------------------------------------
+Overall Test Loss: 0.1217
+Metric               | Mean       | Std        | Median     | Min        | Max       
+---------------------------------------------------------------------------
+Dice Coefficient     |    77.89% |    23.89% |    87.14% |     0.00% |    97.79%
+IoU / Jaccard        |    68.42% |    24.04% |    77.21% |     0.00% |    95.67%
+Precision            |    83.83% |    19.90% |    91.13% |     0.00% |   100.00%
+Recall / Sens        |    79.41% |    24.62% |    89.09% |     0.00% |   100.00%
+Specificity          |    99.75% |     0.37% |    99.88% |    97.43% |   100.00%
+Pixel Accuracy       |    99.31% |     0.93% |    99.63% |    89.44% |    99.94%
+---------------------------------------------------------------------------
+
+11. Tumor-Size Stratified Analysis (Test Set)
+---------------------------------------------
+Size Category      | Count  | Dice (Mean)  | Dice (Median)  | IoU (Mean)  
+--------------------------------------------------------------------
+Small (<0.71%)     | 179    |      65.13% |        79.02% |      54.11%
+Medium (0.71-2.14%) | 405    |      80.83% |        87.95% |      71.17%
+Large (>2.14%)     | 276    |      81.86% |        91.13% |      73.65%
+--------------------------------------------------------------------
+
+12. Breakdown by Tumor Class and Slice Plane (Test Set)
+-------------------------------------------------------
+A. Performance by Tumor Class:
+  - Glioma       (n = 254): Mean Dice = 65.65% | Median Dice = 78.54% | Mean IoU = 55.50%
+  - Meningioma   (n = 306): Mean Dice = 86.62% | Median Dice = 91.69% | Mean IoU = 78.82%
+  - Pituitary    (n = 300): Mean Dice = 79.36% | Median Dice = 85.09% | Mean IoU = 68.74%
+
+B. Performance by Anatomical Plane:
+  - Axial        (n = 346): Mean Dice = 75.48% | Median Dice = 86.83% | Mean IoU = 66.24%
+  - Coronal      (n = 257): Mean Dice = 79.03% | Median Dice = 86.89% | Mean IoU = 69.32%
+  - Sagittal     (n = 257): Mean Dice = 80.00% | Median Dice = 87.81% | Mean IoU = 70.44%
+
+13. Duplicate Data Limitation
+-----------------------------
+Statement: The BRISC2025 segmentation dataset contains 5 exact duplicate image-mask pairs across the official train and test partitions; this is treated as an upstream dataset limitation rather than modified or removed from the official evaluation.
+
+14. Patient-Level Independence Limitation
+-----------------------------------------
+Statement: Patient-level independence could not be verified because patient identifiers were unavailable.
+
+15. Research Scope & Limitations
+--------------------------------
+1. Research Prototype: This model is developed as an AI-assisted brain tumor segmentation prototype / research segmentation model and is not clinically validated for diagnostic or surgical intervention.
+2. 2D Slice Context: The U-Net processes independent 2D slices and does not leverage 3D volumetric inter-slice contextual continuity.
+3. Small Tumor Challenge: Segmenting very small focal lesions (<0.5% slice area) exhibits lower Dice overlap due to boundary discretization effects, though high sensitivity is maintained.
+
+16. Final Conclusion
+--------------------
+The baseline U-Net achieves a strong Mean Test Dice of 77.89% (Median: 87.14%) and Mean Test IoU of 68.42% on the independent 860-slice test holdout.
+The segmentation pipeline demonstrated robust spatial delineation across diverse tumor types (Glioma, Meningioma, Pituitary) and anatomical planes.
+This completes the U-Net segmentation baseline, providing pixel-level ground truth and predictions ready for multi-task explainability synthesis.

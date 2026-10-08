@@ -1,0 +1,35 @@
+# Python & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Datasets (Keep large research dataset uncommitted)
+brisc2025/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Node & Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# IDE & Editor caches
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Temporary Files
+.DS_Store
+Thumbs.db
