@@ -132,19 +132,25 @@ During the Docker build on Railway, `backend/download_checkpoints.py`:
 
 ---
 
-## 5. Railway Deployment (Backend - Recommended)
+## 5. Hugging Face Spaces Deployment (Backend - Recommended Free Tier: 16 GB RAM)
 
-The project includes a root-level `Dockerfile` and `railway.json` configured specifically for Railway.
+Hugging Face Spaces provides **2 vCPU and 16 GB RAM** on its free community tier, easily accommodating the exact ResNet-18 + Epoch-23 U-Net models (~800 MB footprint):
 
-1. Sign in to [Railway](https://railway.com) and click **New Project > Deploy from GitHub repo**.
-2. Select your repository (`AI-Brain-Tumor-Analysis`).
-3. Railway automatically detects `Dockerfile` and `railway.json` at the repository root.
-4. In **Variables**, set:
-   - `FRONTEND_URL`: `https://your-frontend.vercel.app` (or `http://localhost:5173` during testing).
-5. In **Settings > Healthcheck**, verify:
-   - Path: `/api/health`
-   - Timeout: `300` (allows PyTorch model initialization on cold boot).
-6. Under **Networking**, click **Generate Domain** to get your public API URL (e.g., `https://brain-mri-api.up.railway.app`).
+1. Sign in to [Hugging Face](https://huggingface.co) and click **New Space**.
+2. Set Space properties:
+   - **Space name**: `brain-tumor-mri-api` (or preferred name).
+   - **License**: `mit`.
+   - **Space SDK**: **Docker** (Blank).
+   - **Space hardware**: `CPU Basic • 2 vCPU • 16GB RAM` (**Free**).
+   - **Visibility**: `Public`.
+3. Connect your GitHub repository (`AI-Brain-Tumor-Analysis`, branch `deployment-free`) or push via git to the Hugging Face Space remote.
+4. Hugging Face automatically reads `README.md` (`app_port: 7860`) and builds `Dockerfile`.
+5. Under Space **Settings > Variables and secrets**, add:
+   - `FRONTEND_URL`: `https://your-frontend.vercel.app` (or `http://localhost:5173` for local frontend testing).
+6. Your live public API URL will be:
+   `https://<username>-brain-tumor-mri-api.hf.space`
+   - Healthcheck: `https://<username>-brain-tumor-mri-api.hf.space/api/health`
+   - Interactive Docs: `https://<username>-brain-tumor-mri-api.hf.space/docs`
 
 ---
 
