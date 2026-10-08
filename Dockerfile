@@ -5,7 +5,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    PORT=7860
+    PORT=8080
 
 # 3. Set working directory to /app
 WORKDIR /app
@@ -15,10 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# 5. Set up non-root user (UID 1000) for Hugging Face Spaces
-RUN useradd -m -u 1000 user
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+# 5. Set up non-root application user for secure container execution
+RUN useradd -m -u 1000 appuser
+ENV HOME=/home/appuser \
+    PATH=/home/appuser/.local/bin:$PATH
 
 # 6. Install Python dependencies
 COPY backend/requirements.txt /app/backend/requirements.txt
@@ -40,11 +40,11 @@ RUN python /app/backend/download_checkpoints.py \
     --dest-dir /app/outputs
 
 # 9. Set permissions and switch to non-root user
-RUN chown -R user:user /app
-USER user
+RUN chown -R appuser:appuser /app
+USER appuser
 
-# 10. Expose Hugging Face Spaces standard port
-EXPOSE 7860
+# 10. Expose Cloud Run default container port
+EXPOSE 8080
 
-# 11. Start FastAPI with uvicorn expanding $PORT (defaults to 7860 for Hugging Face Spaces)
-CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-7860}"]
+# 11. Start FastAPI with uvicorn expanding $PORT (defaults to 8080 for Google Cloud Run)
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

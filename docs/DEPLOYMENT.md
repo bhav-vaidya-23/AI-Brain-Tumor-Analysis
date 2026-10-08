@@ -130,27 +130,41 @@ During the Docker build on Railway, `backend/download_checkpoints.py`:
 4. Saves them to `/app/outputs/best_classifier.pth` and `/app/outputs/best_unet.pth`.
 5. Fails the build immediately with actionable instructions if the download or verification fails.
 
----
+## 5. Google Cloud Run Deployment (Backend - Recommended Cloud Hosting)
 
-## 5. Hugging Face Spaces Deployment (Backend - Recommended Free Tier: 16 GB RAM)
+Google Cloud Run is a managed serverless platform that allows configuring custom container memory and CPU allocations, making it ideal for running our exact ResNet-18 + Epoch-23 U-Net PyTorch models (~800 MB – 1 GB peak footprint).
 
-Hugging Face Spaces provides **2 vCPU and 16 GB RAM** on its free community tier, easily accommodating the exact ResNet-18 + Epoch-23 U-Net models (~800 MB footprint):
+### Recommended Resource Sizing:
+- **Memory: `2Gi` (2 GiB)**
+  - *Rationale:* Memory profiling measured a baseline of ~410 MB, settled models at ~683 MB, and peak multi-modal inference (Grad-CAM + U-Net) at ~997 MB. A 2 GiB allocation provides safe 2× headroom without risk of Linux OOM (Out Of Memory) container termination.
+- **CPU: `2` (2 vCPUs)**
+  - *Rationale:* Ensures responsive PyTorch CPU tensor convolutions and fast Grad-CAM backward-gradient computation.
+- **Concurrency: `1`**
+  - *Rationale:* CPU-based deep learning models perform heavy tensor computations on all available CPU cores. Restricting concurrency to 1 per container instance prevents simultaneous requests from multiplying memory usage; Cloud Run automatically spins up additional container instances horizontally to handle incoming traffic.
+- **Timeout: `300` seconds**
+  - *Rationale:* Models are pre-loaded into memory during application startup (`lifespan`). A 300s timeout ensures cold-boot model initialization completes cleanly before traffic serving.
 
-1. Sign in to [Hugging Face](https://huggingface.co) and click **New Space**.
-2. Set Space properties:
-   - **Space name**: `brain-tumor-mri-api` (or preferred name).
-   - **License**: `mit`.
-   - **Space SDK**: **Docker** (Blank).
-   - **Space hardware**: `CPU Basic • 2 vCPU • 16GB RAM` (**Free**).
-   - **Visibility**: `Public`.
-3. Connect your GitHub repository (`AI-Brain-Tumor-Analysis`, branch `deployment-free`) or push via git to the Hugging Face Space remote.
-4. Hugging Face automatically reads `README.md` (`app_port: 7860`) and builds `Dockerfile`.
-5. Under Space **Settings > Variables and secrets**, add:
-   - `FRONTEND_URL`: `https://your-frontend.vercel.app` (or `http://localhost:5173` for local frontend testing).
-6. Your live public API URL will be:
-   `https://<username>-brain-tumor-mri-api.hf.space`
-   - Healthcheck: `https://<username>-brain-tumor-mri-api.hf.space/api/health`
-   - Interactive Docs: `https://<username>-brain-tumor-mri-api.hf.space/docs`
+### Direct Deployment Command:
+Run from the repository root:
+```bash
+gcloud run deploy brain-tumor-mri-api \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --memory 2Gi \
+  --cpu 2 \
+  --concurrency 1 \
+  --timeout 300 \
+  --set-env-vars FRONTEND_URL="https://your-frontend.vercel.app"
+```
+
+*Replace `us-central1` with your preferred Google Cloud region and `https://your-frontend.vercel.app` with your production frontend URL.*
+
+### Endpoints:
+- **Base URL:** Assigned automatically by Cloud Run (e.g., `https://brain-tumor-mri-api-xyz-uc.a.run.app`).
+- **Healthcheck:** `https://<SERVICE_URL>/api/health`
+- **Inference:** `POST https://<SERVICE_URL>/api/analyze`
+- **Interactive Docs:** `https://<SERVICE_URL>/docs`
 
 ---
 

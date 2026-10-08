@@ -1,14 +1,3 @@
----
-title: AI Brain Tumor MRI Analysis API
-emoji: 🧠
-colorFrom: indigo
-colorTo: cyan
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
----
-
 # AI-Based Brain Tumor Classification, Segmentation and Explainable MRI Analysis
 
 Production-grade FastAPI inference backend for multi-task brain MRI analysis, powered by PyTorch:
