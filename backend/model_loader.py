@@ -40,9 +40,16 @@ class ModelManager:
         
         self.classifier = build_resnet18_classifier(num_classes=4, pretrained=False, freeze_backbone=False)
         cls_ckpt = torch.load(CLASSIFIER_PATH, map_location=self.device, weights_only=False)
-        self.classifier.load_state_dict(cls_ckpt["model_state_dict"])
+        cls_state_dict = cls_ckpt["model_state_dict"]
+        del cls_ckpt  # Free optimizer_state_dict and training metadata immediately
+        import gc
+        gc.collect()
+
+        self.classifier.load_state_dict(cls_state_dict)
+        del cls_state_dict
         self.classifier.to(self.device)
         self.classifier.eval()
+        gc.collect()
 
         # Initialize Grad-CAM on layer4
         self.gradcam = GradCAM(model=self.classifier, target_layer=self.classifier.layer4)
@@ -51,11 +58,17 @@ class ModelManager:
         if not UNET_PATH.exists():
             raise FileNotFoundError(f"U-Net checkpoint not found at: {UNET_PATH}")
 
-        self.unet = UNet(n_channels=1, n_classes=1).to(self.device)
         unet_ckpt = torch.load(UNET_PATH, map_location=self.device, weights_only=False)
-        self.unet.load_state_dict(unet_ckpt["model_state_dict"])
+        unet_state_dict = unet_ckpt["model_state_dict"]
+        del unet_ckpt  # Free 248MB optimizer_state_dict immediately
+        gc.collect()
+
+        self.unet = UNet(n_channels=1, n_classes=1)
+        self.unet.load_state_dict(unet_state_dict)
+        del unet_state_dict
         self.unet.to(self.device)
         self.unet.eval()
+        gc.collect()
 
         self.is_loaded = True
         print("[Backend] All models successfully loaded into memory.", flush=True)

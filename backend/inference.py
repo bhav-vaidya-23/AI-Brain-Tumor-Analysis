@@ -109,8 +109,11 @@ def run_full_inference(image_bytes: bytes) -> Dict[str, Any]:
     gradcam_overlay_np = manager.gradcam.overlay_heatmap(orig_rgb_np, heatmap_np, alpha=0.45, colormap='jet')
 
     # 4. U-Net Segmentation Inference
+    # Free classifier gradients from Grad-CAM
+    manager.classifier.zero_grad(set_to_none=True)
+
     unet_tensor = TF.normalize(TF.to_tensor(orig_gray_pil), mean=[0.5], std=[0.5]).unsqueeze(0).to(manager.device)
-    with torch.no_grad():
+    with torch.inference_mode():
         unet_logits = manager.unet(unet_tensor)
         unet_probs = torch.sigmoid(unet_logits).squeeze().cpu().numpy()
         unet_pred_bin = (unet_probs >= 0.50).astype(np.uint8)
