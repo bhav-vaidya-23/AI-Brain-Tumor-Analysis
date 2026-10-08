@@ -1,0 +1,38 @@
+# Raw Research Dataset (Do NOT include in container image)
+brisc2025/
+
+# Frontend (Deployed separately on Vercel)
+frontend/
+
+# Research reports, logs & standalone evaluation scripts
+reports/
+scripts/
+*.log
+
+# Output directory contents except model checkpoints
+outputs/*
+!outputs/best_classifier.pth
+!outputs/best_unet.pth
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Version control & editor metadata
+.git/
+.gitignore
+.gitattributes
+.github/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

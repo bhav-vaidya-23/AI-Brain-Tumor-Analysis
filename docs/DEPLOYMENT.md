@@ -108,7 +108,23 @@ git commit -m "Add model checkpoints via Git LFS"
 
 ---
 
-## 5. Render Deployment (Backend)
+## 5. Railway Deployment (Backend - Recommended)
+
+The project includes a root-level `Dockerfile` and `railway.json` configured specifically for Railway.
+
+1. Sign in to [Railway](https://railway.com) and click **New Project > Deploy from GitHub repo**.
+2. Select your repository (`AI-Brain-Tumor-Analysis`).
+3. Railway automatically detects `Dockerfile` and `railway.json` at the repository root.
+4. In **Variables**, set:
+   - `FRONTEND_URL`: `https://your-frontend.vercel.app` (or `http://localhost:5173` during testing).
+5. In **Settings > Healthcheck**, verify:
+   - Path: `/api/health`
+   - Timeout: `300` (allows PyTorch model initialization on cold boot).
+6. Under **Networking**, click **Generate Domain** to get your public API URL (e.g., `https://brain-mri-api.up.railway.app`).
+
+---
+
+## 6. Render Deployment (Backend - Alternative)
 
 1. Sign in to [Render](https://render.com) and click **New + > Web Service**.
 2. Connect your GitHub repository.
@@ -134,7 +150,7 @@ git commit -m "Add model checkpoints via Git LFS"
 
 ---
 
-## 6. Vercel Deployment (Frontend)
+## 7. Vercel Deployment (Frontend)
 
 1. Sign in to [Vercel](https://vercel.com) and click **Add New > Project**.
 2. Select your repository.
